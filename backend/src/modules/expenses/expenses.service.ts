@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ExpensesRepository } from '../../repositories/expenses.repository';
-import { type NewExpense } from '../../db/schema';
 
 @Injectable()
 export class ExpensesService {
@@ -9,11 +8,7 @@ export class ExpensesService {
   ) {}
 
   async create(createExpenseDto: any): Promise<any> {
-    const newExpense: NewExpense = {
-      ...createExpenseDto,
-      amount: createExpenseDto.amount.toString(),
-    };
-    return this.expensesRepository.create(newExpense);
+    return this.expensesRepository.create(createExpenseDto);
   }
 
   async findAll(): Promise<any[]> {

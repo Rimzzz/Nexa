@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ItemsRepository } from '../../repositories/items.repository';
-import { type NewItem } from '../../db/schema';
 
 @Injectable()
 export class ItemsService {
@@ -9,12 +8,7 @@ export class ItemsService {
   ) {}
 
   async create(createItemDto: any): Promise<any> {
-    const newItem: NewItem = {
-      ...createItemDto,
-      price: createItemDto.price.toString(),
-      stock: createItemDto.stock || 0,
-    };
-    return this.itemsRepository.create(newItem);
+    return this.itemsRepository.create(createItemDto);
   }
 
   async findAll(): Promise<any[]> {
@@ -32,18 +26,13 @@ export class ItemsService {
   }
 
   async update(id: number, updateItemDto: any): Promise<any> {
-    const item = await this.findById(id);
+    const item = await this.itemsRepository.findById(id);
     
-    const updated: Partial<NewItem> = {};
-    if (updateItemDto.name !== undefined) updated.name = updateItemDto.name;
-    if (updateItemDto.description !== undefined) updated.description = updateItemDto.description;
-    if (updateItemDto.price !== undefined) updated.price = updateItemDto.price.toString();
-    if (updateItemDto.stock !== undefined) updated.stock = updateItemDto.stock;
-    if (updateItemDto.category !== undefined) updated.category = updateItemDto.category;
-    if (updateItemDto.barcode !== undefined) updated.barcode = updateItemDto.barcode;
-    if (updateItemDto.isActive !== undefined) updated.isActive = updateItemDto.isActive;
+    if (!item) {
+      throw new NotFoundException(`Item dengan ID ${id} tidak ditemukan`);
+    }
     
-    return this.itemsRepository.update(id, updated);
+    return this.itemsRepository.update(id, updateItemDto);
   }
 
   async remove(id: number): Promise<void> {

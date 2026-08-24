@@ -1,11 +1,11 @@
 import { pgTable, text, numeric, timestamp, integer, boolean, pgEnum } from 'drizzle-orm/pg-core';
 
-// Enums
-export const userRoleEnum = pgEnum('user_role', ['cashier', 'admin']);
-export const paymentMethodEnum = pgEnum('payment_method', ['cash', 'card', 'qr', 'other']);
-export const categoryTypeEnum = pgEnum('category_type', ['income', 'expense']);
+// Enums - matching existing database enum names
+export const userRoleEnum = pgEnum('users_role_enum', ['cashier', 'admin']);
+export const paymentMethodEnum = pgEnum('payment_method_enum', ['cash', 'card', 'qr', 'other']);
+export const categoryTypeEnum = pgEnum('category_type_enum', ['income', 'expense']);
 
-// Tables - using snake_case column names to match DB
+// Tables - using snake_case column names
 export const users = pgTable('users', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
   username: text('username').notNull().unique(),

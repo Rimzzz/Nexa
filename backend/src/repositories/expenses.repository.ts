@@ -1,38 +1,51 @@
 import { Injectable } from '@nestjs/common';
-import { Inject } from '@nestjs/common';
-import { eq, desc, between, like } from 'drizzle-orm';
-import { expenses, type Expense, type NewExpense } from '../db/schema';
+import { Pool } from 'pg';
 
 @Injectable()
 export class ExpensesRepository {
-  constructor(
-    @Inject('DATABASE') private db: any,
-  ) {}
+  private pool: Pool;
 
-  async findAll(): Promise<Expense[]> {
-    return this.db.select().from(expenses).orderBy(desc(expenses.expenseDate));
+  constructor() {
+    const connectionString = process.env.DATABASE_URL || 
+      'postgresql://nexa_user:nexa_pass_123@172.18.0.2:5432/nexa_db';
+    
+    this.pool = new Pool({
+      connectionString,
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+    });
   }
 
-  async findById(id: number): Promise<Expense | undefined> {
-    const [expense] = await this.db.select().from(expenses).where(eq(expenses.id, id)).limit(1);
-    return expense;
+  async findAll(): Promise<any[]> {
+    const result = await this.pool.query('SELECT * FROM expenses ORDER BY expense_date DESC');
+    return result.rows;
   }
 
-  async findByDateRange(startDate: Date, endDate: Date): Promise<Expense[]> {
-    return this.db
-      .select()
-      .from(expenses)
-      .where(between(expenses.expenseDate, startDate, endDate))
-      .orderBy(desc(expenses.expenseDate));
+  async findById(id: number): Promise<any> {
+    const result = await this.pool.query('SELECT * FROM expenses WHERE id = $1', [id]);
+    return result.rows[0];
   }
 
-  async create(data: NewExpense): Promise<Expense> {
-    const [expense] = await this.db.insert(expenses).values(data).returning();
-    return expense;
+  async findByDateRange(startDate: Date, endDate: Date): Promise<any[]> {
+    const result = await this.pool.query(
+      'SELECT * FROM expenses WHERE expense_date BETWEEN $1 AND $2 ORDER BY expense_date DESC',
+      [startDate, endDate]
+    );
+    return result.rows;
+  }
+
+  async create(data: any): Promise<any> {
+    const result = await this.pool.query(
+      `INSERT INTO expenses (expense_date, description, amount, category_id, category, notes, created_at) 
+       VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING *`,
+      [data.expenseDate || new Date(), data.description, data.amount, data.categoryId, data.category, data.notes]
+    );
+    return result.rows[0];
   }
 
   async delete(id: number): Promise<boolean> {
-    const [expense] = await this.db.delete(expenses).where(eq(expenses.id, id)).returning();
-    return !!expense;
+    const result = await this.pool.query('DELETE FROM expenses WHERE id = $1 RETURNING id', [id]);
+    return !!result.rows[0];
   }
 }

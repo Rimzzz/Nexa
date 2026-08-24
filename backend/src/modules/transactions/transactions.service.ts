@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { TransactionsRepository } from '../../repositories/transactions.repository';
-import { type NewTransaction, type NewTransactionItem } from '../../db/schema';
 
 @Injectable()
 export class TransactionsService {
@@ -11,25 +10,17 @@ export class TransactionsService {
   async create(createTransactionDto: any): Promise<any> {
     const { items, ...transactionData } = createTransactionDto;
 
-    const newTransaction: NewTransaction = {
-      ...transactionData,
-      subtotal: transactionData.subtotal || '0',
-      tax: transactionData.tax || '0',
-      discount: transactionData.discount || '0',
-      total: transactionData.total || '0',
-    };
-
-    const transaction = await this.transactionsRepository.create(newTransaction);
+    const transaction = await this.transactionsRepository.createTransaction(transactionData);
 
     if (items && items.length > 0) {
-      const transactionItems: NewTransactionItem[] = items.map((item: any) => ({
+      const transactionItems = items.map((item: any) => ({
+        transactionId: transaction.id,
         itemName: item.itemName,
         quantity: item.quantity || 1,
-        price: item.price.toString(),
-        subtotal: item.subtotal || (item.quantity * item.price).toString(),
-        transactionId: transaction.id,
+        price: item.price,
+        subtotal: item.subtotal || (item.quantity * item.price),
       }));
-      await this.transactionsRepository.createItems(transactionItems);
+      await this.transactionsRepository.createTransactionItems(transactionItems);
     }
 
     return transaction;
