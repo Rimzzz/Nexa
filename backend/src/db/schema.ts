@@ -5,7 +5,7 @@ export const userRoleEnum = pgEnum('user_role', ['cashier', 'admin']);
 export const paymentMethodEnum = pgEnum('payment_method', ['cash', 'card', 'qr', 'other']);
 export const categoryTypeEnum = pgEnum('category_type', ['income', 'expense']);
 
-// Tables
+// Tables - using snake_case column names to match DB
 export const users = pgTable('users', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
   username: text('username').notNull().unique(),

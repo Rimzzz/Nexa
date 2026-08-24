@@ -4,11 +4,13 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UsersRepository } from '../../repositories/users.repository';
+import { DatabaseModule } from '../database/database.module';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
   imports: [
+    DatabaseModule,
     JwtModule.registerAsync({
       useFactory: () => ({
         secret: process.env.JWT_SECRET || 'nexa_jwt_secret_key_2024',
