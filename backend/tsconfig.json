@@ -15,12 +15,8 @@
     "strictNullChecks": false,
     "noImplicitAny": false,
     "strictBindCallApply": false,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": false,
+    "noFallthroughCasesInSwitch": false,
     "esModuleInterop": true
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "test"]
+  }
 }

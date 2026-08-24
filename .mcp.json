@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-filesystem", "/home/ubuntu/project/Nexa"]
+    },
+    "figma": {
+      "command": "node",
+      "args": ["/home/ubuntu/project/Nexa/scripts/figma-mcp-server.js"],
+      "env": {
+        "FIGMA_API_KEY": "${FIGMA_API_KEY}"
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-github"]
+    }
+  }
+}

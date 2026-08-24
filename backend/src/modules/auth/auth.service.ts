@@ -1,23 +1,19 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from '../../entities/user.entity';
+import { UsersRepository } from '../../repositories/users.repository';
 import { CreateUserDto, LoginDto } from './dto/auth.dto';
+import { type NewUser } from '../../db/schema';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(User)
-    private usersRepository: any,
+    private usersRepository: UsersRepository,
     private jwtService: JwtService,
   ) {}
 
-  async register(createUserDto: any): Promise<any> {
-    const existingUser = await this.usersRepository.findOne({
-      where: { username: createUserDto.username },
-    });
+  async register(createUserDto: CreateUserDto): Promise<any> {
+    const existingUser = await this.usersRepository.findByUsername(createUserDto.username);
 
     if (existingUser) {
       throw new Error('Username sudah digunakan');
@@ -25,21 +21,20 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
-    const user = await this.usersRepository.save({
+    const newUser: NewUser = {
       username: createUserDto.username,
       password: hashedPassword,
       fullName: createUserDto.fullName,
       role: createUserDto.role || 'cashier',
-    });
+    };
 
+    const user = await this.usersRepository.create(newUser);
     const { password, ...result } = user;
     return result;
   }
 
-  async login(loginDto: any): Promise<any> {
-    const user = await this.usersRepository.findOne({
-      where: { username: loginDto.username },
-    });
+  async login(loginDto: LoginDto): Promise<any> {
+    const user = await this.usersRepository.findByUsername(loginDto.username);
 
     if (!user) {
       throw new UnauthorizedException('Username atau password salah');
@@ -72,9 +67,7 @@ export class AuthService {
   }
 
   async getProfile(userId: number): Promise<any> {
-    const user = await this.usersRepository.findOne({
-      where: { id: userId },
-    });
+    const user = await this.usersRepository.findById(userId);
 
     if (!user) {
       throw new UnauthorizedException('User tidak ditemukan');

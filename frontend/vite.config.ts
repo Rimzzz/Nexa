@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
   plugins: [vue()],
+  base: '/',
   server: {
     port: 3001,
     host: '0.0.0.0',
@@ -12,5 +13,9 @@ export default defineConfig({
         changeOrigin: true,
       }
     }
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: false
   }
 })

@@ -1,45 +1,43 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
-import { Expense } from '../../entities/expense.entity';
+import { ExpensesRepository } from '../../repositories/expenses.repository';
+import { type NewExpense } from '../../db/schema';
 
 @Injectable()
 export class ExpensesService {
   constructor(
-    @InjectRepository(Expense)
-    private expensesRepository: Repository<Expense>,
+    private expensesRepository: ExpensesRepository,
   ) {}
 
   async create(createExpenseDto: any): Promise<any> {
-    const expense = this.expensesRepository.create(createExpenseDto);
-    return this.expensesRepository.save(expense);
+    const newExpense: NewExpense = {
+      ...createExpenseDto,
+      amount: createExpenseDto.amount.toString(),
+    };
+    return this.expensesRepository.create(newExpense);
   }
 
   async findAll(): Promise<any[]> {
-    return this.expensesRepository.find({
-      order: { expenseDate: 'DESC' },
-    });
+    return this.expensesRepository.findAll();
   }
 
   async findById(id: number): Promise<any> {
-    const expense = await this.expensesRepository.findOne({ where: { id } });
+    const expense = await this.expensesRepository.findById(id);
+    
     if (!expense) {
       throw new NotFoundException(`Pengeluaran dengan ID ${id} tidak ditemukan`);
     }
+    
     return expense;
   }
 
   async findByDateRange(startDate: string, endDate: string): Promise<any[]> {
-    return this.expensesRepository.find({
-      where: {
-        expenseDate: Between(new Date(startDate), new Date(endDate)),
-      },
-      order: { expenseDate: 'DESC' },
-    });
+    return this.expensesRepository.findByDateRange(new Date(startDate), new Date(endDate));
   }
 
   async remove(id: number): Promise<void> {
-    const expense = await this.findById(id);
-    await this.expensesRepository.remove(expense);
+    const exists = await this.expensesRepository.delete(id);
+    if (!exists) {
+      throw new NotFoundException(`Pengeluaran dengan ID ${id} tidak ditemukan`);
+    }
   }
 }

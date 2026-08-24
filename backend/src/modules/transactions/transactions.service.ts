@@ -1,54 +1,47 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
-import { Transaction } from '../../entities/transaction.entity';
-import { TransactionItem } from '../../entities/transaction-item.entity';
+import { TransactionsRepository } from '../../repositories/transactions.repository';
+import { type NewTransaction, type NewTransactionItem } from '../../db/schema';
 
 @Injectable()
 export class TransactionsService {
   constructor(
-    @InjectRepository(Transaction)
-    private transactionsRepository: any,
-    @InjectRepository(TransactionItem)
-    private transactionItemsRepository: any,
+    private transactionsRepository: TransactionsRepository,
   ) {}
 
   async create(createTransactionDto: any): Promise<any> {
     const { items, ...transactionData } = createTransactionDto;
 
-    const transaction = await this.transactionsRepository.save({
+    const newTransaction: NewTransaction = {
       ...transactionData,
-      subtotal: transactionData.subtotal || 0,
-      tax: transactionData.tax || 0,
-      discount: transactionData.discount || 0,
-      total: transactionData.total || 0,
-    });
+      subtotal: transactionData.subtotal || '0',
+      tax: transactionData.tax || '0',
+      discount: transactionData.discount || '0',
+      total: transactionData.total || '0',
+    };
+
+    const transaction = await this.transactionsRepository.create(newTransaction);
 
     if (items && items.length > 0) {
-      const transactionItems = items.map((item: any) => ({
-        ...item,
+      const transactionItems: NewTransactionItem[] = items.map((item: any) => ({
+        itemName: item.itemName,
+        quantity: item.quantity || 1,
+        price: item.price.toString(),
+        subtotal: item.subtotal || (item.quantity * item.price).toString(),
         transactionId: transaction.id,
-        subtotal: item.quantity * item.price,
       }));
-      await this.transactionItemsRepository.save(transactionItems);
+      await this.transactionsRepository.createItems(transactionItems);
     }
 
     return transaction;
   }
 
   async findAll(): Promise<any[]> {
-    return this.transactionsRepository.find({
-      relations: ['cashier', 'items'],
-      order: { transactionDate: 'DESC' },
-    });
+    return this.transactionsRepository.findAll();
   }
 
   async findById(id: number): Promise<any> {
-    const transaction = await this.transactionsRepository.findOne({
-      where: { id },
-      relations: ['cashier', 'items'],
-    });
-
+    const transaction = await this.transactionsRepository.findById(id);
+    
     if (!transaction) {
       throw new NotFoundException(`Transaksi dengan ID ${id} tidak ditemukan`);
     }
@@ -57,17 +50,13 @@ export class TransactionsService {
   }
 
   async findByDateRange(startDate: string, endDate: string): Promise<any[]> {
-    return this.transactionsRepository.find({
-      where: {
-        transactionDate: Between(new Date(startDate), new Date(endDate)),
-      },
-      relations: ['cashier', 'items'],
-      order: { transactionDate: 'DESC' },
-    });
+    return this.transactionsRepository.findByDateRange(new Date(startDate), new Date(endDate));
   }
 
   async remove(id: number): Promise<void> {
-    const transaction = await this.findById(id);
-    await this.transactionsRepository.remove(transaction);
+    const exists = await this.transactionsRepository.delete(id);
+    if (!exists) {
+      throw new NotFoundException(`Transaksi dengan ID ${id} tidak ditemukan`);
+    }
   }
 }
