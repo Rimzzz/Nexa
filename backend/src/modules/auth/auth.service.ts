@@ -1,9 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersRepository } from '../../repositories/users.repository';
 import { CreateUserDto, LoginDto } from './dto/auth.dto';
-import { type NewUser } from '../../db/schema';
 
 @Injectable()
 export class AuthService {
@@ -13,23 +12,30 @@ export class AuthService {
   ) {}
 
   async register(createUserDto: CreateUserDto): Promise<any> {
-    const existingUser = await this.usersRepository.findByUsername(createUserDto.username);
+    const { username, email, password, fullName, role } = createUserDto;
 
+    const existingUser = await this.usersRepository.findByUsername(username);
     if (existingUser) {
-      throw new Error('Username sudah digunakan');
+      throw new ConflictException('Username sudah digunakan');
     }
 
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+    const existingEmail = await this.usersRepository.findByEmail(email);
+    if (existingEmail) {
+      throw new ConflictException('Email sudah digunakan');
+    }
 
-    const newUser: NewUser = {
-      username: createUserDto.username,
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = {
+      username,
+      email,
       password: hashedPassword,
-      fullName: createUserDto.fullName,
-      role: createUserDto.role || 'cashier',
+      fullName,
+      role: role || 'cashier',
     };
 
     const user = await this.usersRepository.create(newUser);
-    const { password, ...result } = user;
+    const { password: _, ...result } = user;
     return result;
   }
 
@@ -60,7 +66,8 @@ export class AuthService {
       user: {
         id: user.id,
         username: user.username,
-        fullName: user.fullName,
+        email: user.email,
+        fullName: user.full_name,
         role: user.role,
       },
     };

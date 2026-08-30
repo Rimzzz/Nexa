@@ -9,6 +9,7 @@ export const categoryTypeEnum = pgEnum('category_type_enum', ['income', 'expense
 export const users = pgTable('users', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
   username: text('username').notNull().unique(),
+  email: text('email').notNull().unique(),
   password: text('password').notNull(),
   role: userRoleEnum('role').default('cashier').notNull(),
   fullName: text('full_name'),
