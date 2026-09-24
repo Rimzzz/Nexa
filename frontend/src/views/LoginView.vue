@@ -116,6 +116,7 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { SwitchButton, InfoFilled, Money } from '@element-plus/icons-vue'
+import axios from 'axios'
 
 const router = useRouter()
 const formRef = ref()
@@ -144,28 +145,22 @@ const handleLogin = async () => {
   await formRef.value.validate(async (valid: boolean) => {
     if (valid) {
       loading.value = true
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Demo authentication (temporary)
-      if (form.username === 'admin@nexa.local' && form.password === 'admin123') {
-        ElMessage.success('Login berhasil! Selamat datang~')
-        // Store demo token
-        localStorage.setItem('token', 'demo-token-123')
-        localStorage.setItem('user', JSON.stringify({
-          id: 1,
-          username: 'admin@nexa.local',
-          fullName: 'Administrator',
-          role: 'admin'
-        }))
-        // Redirect to dashboard
+      try {
+        const res = await axios.post('/api/auth/login', {
+          username: form.username,
+          password: form.password
+        })
+        
+        const { access_token, user } = res.data
+        localStorage.setItem('token', access_token)
+        localStorage.setItem('user', JSON.stringify(user))
+        ElMessage.success(`Selamat datang, ${user.fullName}!`)
         router.push('/dashboard')
-      } else {
-        ElMessage.error('Username atau password salah!')
+      } catch (e: any) {
+        ElMessage.error(e.response?.data?.message || 'Username atau password salah!')
+      } finally {
+        loading.value = false
       }
-      
-      loading.value = false
     }
   })
 }
@@ -176,7 +171,7 @@ const handleLogin = async () => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  background: linear-gradient(135deg, var(--color-primary-active) 0%, var(--color-text-heading) 50%, var(--color-primary) 100%);
   position: relative;
   overflow: hidden;
 }
@@ -201,7 +196,7 @@ const handleLogin = async () => {
 .circle-1 {
   width: 400px;
   height: 400px;
-  background: #e94560;
+  background: var(--color-danger);
   top: -100px;
   right: -100px;
   animation: float 6s ease-in-out infinite;
@@ -210,7 +205,7 @@ const handleLogin = async () => {
 .circle-2 {
   width: 300px;
   height: 300px;
-  background: #0f3460;
+  background: var(--color-info);
   bottom: -50px;
   left: -50px;
   animation: float 8s ease-in-out infinite reverse;
@@ -219,7 +214,7 @@ const handleLogin = async () => {
 .circle-3 {
   width: 200px;
   height: 200px;
-  background: #533483;
+  background: var(--color-primary);
   top: 50%;
   left: 50%;
   animation: float 7s ease-in-out infinite;
@@ -233,6 +228,7 @@ const handleLogin = async () => {
 .h-100 {
   height: 100%;
   flex: 1;
+  margin: 0 !important;
 }
 
 .login-card {
@@ -240,8 +236,7 @@ const handleLogin = async () => {
   backdrop-filter: blur(10px);
   border-radius: 20px;
   padding: 40px 30px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  margin: 20px 0;
+  box-shadow: var(--shadow-lg);
   animation: slideUp 0.5s ease-out;
 }
 
@@ -265,12 +260,12 @@ const handleLogin = async () => {
   width: 80px;
   height: 80px;
   margin: 0 auto 15px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-active) 100%);
   border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+  box-shadow: var(--shadow-primary);
 }
 
 .logo-icon {
@@ -280,13 +275,13 @@ const handleLogin = async () => {
 .login-title {
   font-size: 28px;
   font-weight: 700;
-  color: #1a1a2e;
+  color: var(--color-text-heading);
   margin: 0 0 5px;
 }
 
 .login-subtitle {
   font-size: 14px;
-  color: #666;
+  color: var(--color-text-muted);
   margin: 0;
 }
 
@@ -311,14 +306,14 @@ const handleLogin = async () => {
   border-radius: 12px;
   font-size: 16px;
   font-weight: 600;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-active) 100%);
   border: none;
   transition: all 0.3s ease;
 }
 
 .login-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+  box-shadow: var(--shadow-primary);
 }
 
 .divider {
@@ -327,7 +322,7 @@ const handleLogin = async () => {
 
 .divider-text {
   font-size: 12px;
-  color: #999;
+  color: var(--color-text-subtle);
   background: rgba(255, 255, 255, 0.95);
   padding: 0 10px;
 }
@@ -338,15 +333,15 @@ const handleLogin = async () => {
   justify-content: center;
   gap: 8px;
   padding: 12px;
-  background: #f0f9ff;
+  background: var(--color-info-soft);
   border-radius: 8px;
   margin-bottom: 20px;
   font-size: 13px;
-  color: #0369a1;
+  color: var(--color-info);
 }
 
 .demo-info code {
-  background: #e0f2fe;
+  background: var(--color-info-soft);
   padding: 2px 6px;
   border-radius: 4px;
   font-family: monospace;
@@ -355,7 +350,7 @@ const handleLogin = async () => {
 .register-link {
   text-align: center;
   font-size: 14px;
-  color: #666;
+  color: var(--color-text-muted);
 }
 
 .login-footer {
@@ -366,6 +361,10 @@ const handleLogin = async () => {
 }
 
 /* Element Plus overrides */
+:deep(.el-row) {
+  margin: 0 !important;
+}
+
 :deep(.el-input__wrapper) {
   border-radius: 12px;
   padding: 8px 15px;

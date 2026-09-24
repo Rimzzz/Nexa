@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import MainLayout from '../layouts/MainLayout.vue'
 import LoginView from '../views/LoginView.vue'
 import DashboardView from '../views/DashboardView.vue'
+import ProductsView from '../views/ProductsView.vue'
 import NotFound from '../views/NotFound.vue'
 
 const router = createRouter({
@@ -17,10 +19,23 @@ const router = createRouter({
       meta: { guest: true }
     },
     {
-      path: '/dashboard',
-      name: 'Dashboard',
-      component: DashboardView,
-      meta: { requiresAuth: true }
+      path: '/',
+      component: MainLayout,
+      meta: { requiresAuth: true },
+      children: [
+        {
+          path: 'dashboard',
+          name: 'Dashboard',
+          component: DashboardView,
+          meta: { title: 'Dashboard' }
+        },
+        {
+          path: 'products',
+          name: 'Products',
+          component: ProductsView,
+          meta: { title: 'Produk' }
+        }
+      ]
     },
     {
       path: '/:pathMatch(.*)*',
@@ -32,10 +47,17 @@ const router = createRouter({
 
 // Navigation guard
 router.beforeEach((to) => {
-  const isAuthenticated = localStorage.getItem('token')
-  
-  if (to.meta.requiresAuth && !isAuthenticated) {
+  const isAuthenticated = !!localStorage.getItem('token')
+
+  // Check if current route OR any ancestor requires auth
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+
+  if (requiresAuth && !isAuthenticated) {
     return '/login'
+  }
+  // Redirect logged-in users away from login page
+  if (to.path === '/login' && isAuthenticated) {
+    return '/dashboard'
   }
 })
 
